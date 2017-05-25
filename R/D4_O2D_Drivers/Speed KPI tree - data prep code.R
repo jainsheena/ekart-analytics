@@ -71,7 +71,7 @@ sample_data_frame <- sqlQuery(hive_connect, "select
                               shipment.number_of_air_hops,
                               shipment.payment_type,
                               H.city_tier,
-                              tpl.vendor_service_type limit 100")
+                              tpl.vendor_service_type")
 
 data <- sample_data_frame
 #Removing NAs from O2D
