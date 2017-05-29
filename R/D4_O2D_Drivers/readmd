@@ -1,6 +1,6 @@
 This is the O2D model for D4 speed. Can be extended to D2, D5 etc.
 To generate the drivers for D4 speed,
-use file : 'o2d_lm.R' (Can be tweaked to model D2 or D5 flags as well)
+use file : 'o2d_lm.R' (Can be tweaked to model D2 or D5 flags as well); 
 Once, the drivers are finalised, track them week over week here : https://docs.google.com/spreadsheets/d/1_cRV0LTtgO7YoCGgcPFpDrtWN1Lin6QHynIE__opAr8/edit#gid=2005104119
 To generate the driver numbers for each of the weeks, 
-use file : 'Speed KPI tree - data prep code.R'
+use file : 'Speed KPI tree - data prep code.R'; will generate three files d4_overall.csv, d4_fbf.csv, d4_nonfbf.csv
