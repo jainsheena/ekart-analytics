@@ -197,11 +197,11 @@ fbf$Tier2<-aggregate(fbf_data$units, by=list(fbf_data$city_tier),FUN=sum)[3,2]/s
 non_fbf$express<-aggregate(nfbf_data$units, by=list(nfbf_data$dispatch_service_tier),FUN=sum)[1,2]/sum(nfbf_data$units)
 non_fbf$D0_ofd<-aggregate(nfbf_data$units, by=list(nfbf_data$D0_OFD),FUN=sum)[2,2]/sum(nfbf_data$units)
 non_fbf$FAD<-aggregate(nfbf_data$units, by=list(nfbf_data$D0_del),FUN=sum)[2,2]/sum(nfbf_data$units)
-non_fbf$regular_air<-aggregate(nfbf_data$units, by=list(nfbf_data$mode_service_tier),FUN=sum)[5,2]/sum(nfbf_data$units)
-non_fbf$regular_surface<-aggregate(nfbf_data$units, by=list(nfbf_data$mode_service_tier),FUN=sum)[6,2]/sum(nfbf_data$units)
+non_fbf$regular_air<-aggregate(nfbf_data$units, by=list(nfbf_data$mode_service_tier),FUN=sum)[which(aggregate(nfbf_data$units, by=list(nfbf_data$mode_service_tier),FUN=sum)$Group.1=="Standard Delivery-air"),2]/sum(nfbf_data$units)
+non_fbf$regular_surface<-aggregate(nfbf_data$units, by=list(nfbf_data$mode_service_tier),FUN=sum)[which(aggregate(nfbf_data$units, by=list(nfbf_data$mode_service_tier),FUN=sum)$Group.1=="Standard Delivery-surface"),2]/sum(nfbf_data$units)
 non_fbf$eco<-aggregate(nfbf_data$units, by=list(nfbf_data$shipment_service_tier),FUN=sum)[1,2]/sum(nfbf_data$units)
-non_fbf$sunday_pickup<-aggregate(nfbf_data$units, by=list(nfbf_data$pickup_day),FUN=sum)[1,2]/(sum(aggregate(nfbf_data$units, by=list(nfbf_data$pickup_day),FUN=sum)[-1,]$x)/6)
-non_fbf$sunday_attempt<-aggregate(nfbf_data$units, by=list(nfbf_data$first_ofd_day),FUN=sum)[1,2]/(sum(aggregate(nfbf_data$units, by=list(nfbf_data$first_ofd_day),FUN=sum)[-1,]$x)/6)
+#non_fbf$sunday_pickup<-aggregate(nfbf_data$units, by=list(nfbf_data$pickup_day),FUN=sum)[1,2]/(sum(aggregate(nfbf_data$units, by=list(nfbf_data$pickup_day),FUN=sum)[-1,]$x)/6)
+#non_fbf$sunday_attempt<-aggregate(nfbf_data$units, by=list(nfbf_data$first_ofd_day),FUN=sum)[1,2]/(sum(aggregate(nfbf_data$units, by=list(nfbf_data$first_ofd_day),FUN=sum)[-1,]$x)/6)
 non_fbf$Metro<-aggregate(nfbf_data$units, by=list(nfbf_data$city_tier),FUN=sum)[1,2]/sum(nfbf_data$units)
 non_fbf$Tier1<-aggregate(nfbf_data$units, by=list(nfbf_data$city_tier),FUN=sum)[2,2]/sum(nfbf_data$units)
 non_fbf$Tier2<-aggregate(nfbf_data$units, by=list(nfbf_data$city_tier),FUN=sum)[3,2]/sum(nfbf_data$units)
@@ -215,7 +215,7 @@ overall<-data.frame()
 fbf<-data.frame()
 non_fbf<-data.frame()
 del_date<-min(data$deliver_date)
-while(del_date<=min(data$deliver_date)+1){
+while(del_date<=max(data$deliver_date)){
 f<-a(filter(data,deliver_date==del_date)) 
 ifelse(nrow(overall)==0,overall<-as.data.frame(f[1]),overall<-rbind(overall,as.data.frame(f[1])))
 ifelse(nrow(fbf)==0,fbf<-as.data.frame(f[2]),fbf<-rbind(fbf,as.data.frame(f[2])))
@@ -224,11 +224,11 @@ del_date=del_date+1
 }
 
 #speed_overall$FBF_LZ1_Z2<-sum(speed_overall$FBF_LZ1,speed_overall$FBF_Z2)
-set.seed(500)
+set.seed(51)
 #train<-overall[1:62,]
-train<-sample_frac(overall, 0.7)
+train<-sample_frac(non_fbf, 0.7) # change the name of the data set overall, fbf, non_fbf
 sid<-as.numeric(rownames(train)) 
-test<-overall[-sid,]
+test<-non_fbf[-sid,] # change the name of the data set overall, fbf, non_fbf
 test_backup = test
 
 #Overall
@@ -241,25 +241,22 @@ plot(speed_overall$D4_units, log(speed_overall$tier2), pch=19)
 abline(lm(speed_overall$D4_units ~ log(speed_overall$tier2)), col="red") 
 
 #FBF
-x=model.matrix(FBF_D4_units ~  FBF_D0_del  + D0_con_FBF + FBF_D0_del + FBF_NDD + FBF_tpl_i_offload  #+ FBF_LZ1 
-               + FBF_metro 
-               + FBF_reg_surface + FBF_reg_air ,train)
-y = train$FBF_D4_units
-xtest=model.matrix(FBF_D4_units ~  FBF_D0_del  + D0_con_FBF + FBF_D0_del + FBF_NDD + FBF_tpl_i_offload  #+ FBF_LZ1 
-                   + FBF_metro 
-                   + FBF_reg_surface + FBF_reg_air, test)
+x=model.matrix(D4_flag ~  FAD  + D0_con + ndd +  tpl_ind_offload  + Tier2 
+               + regular_surface + regular_air ,train)
+y = train$D4_flag
+xtest=model.matrix(D4_flag ~  FAD  + D0_con + ndd +  tpl_ind_offload  + Tier2 
+                   + regular_surface + regular_air, test)
 
 plot(speed_overall$FBF_D4_units, speed_overall$FBF_tier2, pch=19)
 abline(lm(speed_overall$FBF_D4_units ~ speed_overall$FBF_tier2), col="red") 
 
 #NFBF
-x=model.matrix(NFBF_D4_units ~ #NFBF_D0_OFD + 
-                 NFBF_D0_del  + express_NFBF + NFBF_eco  + NFBF_tpl_i_offload + NFBF_LZ1 + NFBF_tier2  , train)
-y = train$NFBF_D4_units
-xtest=model.matrix(NFBF_D4_units ~ #NFBF_D0_OFD + 
-                NFBF_D0_del  + express_NFBF + NFBF_eco  + NFBF_tpl_i_offload + NFBF_LZ1  + NFBF_tier2 , test)
+x = model.matrix(D4_flag ~ express + FAD + eco + Tier2 + nfbf_lz1 +tpl_ind_offload+Metro
+                 , train)
+y = train$D4_flag
+xtest=model.matrix(D4_flag ~ express + FAD + eco + Tier2 + nfbf_lz1 + tpl_ind_offload +Metro, test)
 
-
+#common  for alll
 fit=glmnet (x,y,alpha=0.7, lambda=cv.glmnet(x, y)$lambda.min)
 test$objective<-predict(fit, newx=xtest, s = "lambda.min")
 test$predicted_D4 <- test$objective
@@ -269,5 +266,4 @@ test$prediction_error
 fit
 fit$a0 #Intercept
 fit$beta #Coeffs 
-  
-
+ 
